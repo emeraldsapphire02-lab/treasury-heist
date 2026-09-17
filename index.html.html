@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Treasury Heist</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Georgia,serif;background:#f3eee5;color:#29241f}
+.app{max-width:1050px;margin:auto;padding:22px}
+header{background:#5a1f2b;color:#fff;padding:22px 26px;border-radius:16px 16px 0 0}
+header h1{margin:0;font-size:30px}.sub{opacity:.85;margin-top:5px}
+.bar{display:flex;justify-content:space-between;gap:12px;background:#2d2723;color:#fff;padding:12px 18px;align-items:center}
+.timer{font-weight:bold;font-size:20px}.score{font-weight:bold}
+main{background:#fffaf2;min-height:620px;padding:28px;border-radius:0 0 16px 16px;box-shadow:0 8px 30px #0001}
+h2{color:#5a1f2b;margin-top:0}.intro{font-size:17px;line-height:1.6}
+button{border:0;border-radius:9px;padding:11px 17px;background:#7b2d3a;color:#fff;cursor:pointer;font-weight:bold;margin:5px}
+button:hover{opacity:.9}.secondary{background:#74685f}.success{background:#356b4a}.danger{background:#9b3a32}
+.card{background:#fff;border:1px solid #ddd0c0;border-radius:12px;padding:18px;margin:14px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.doc{cursor:pointer;border:1px solid #d7c7b4;background:#f8f1e7;border-radius:10px;padding:15px}
+.doc:hover{border-color:#7b2d3a}.doc b{display:block;color:#5a1f2b;margin-bottom:7px}
+table{width:100%;border-collapse:collapse;background:#fff}th,td{padding:9px;border:1px solid #ddd;text-align:left}th{background:#eee4d7}
+input{padding:11px;border:1px solid #b9aa99;border-radius:8px;font-size:16px;max-width:260px}
+.choice{display:block;width:100%;text-align:left;background:#eee4d7;color:#29241f;margin:8px 0}.choice.selected{outline:3px solid #9b6670}
+.notice{padding:13px;border-radius:9px;background:#f0e2cf;margin:14px 0}.hidden{display:none}
+.evidence{display:flex;flex-wrap:wrap;gap:8px}.tag{padding:8px 11px;background:#ead8c2;border-radius:20px}
+footer{font-size:13px;color:#6f655c;margin-top:14px}
+.progress{height:8px;background:#ddd0c0}.progress span{display:block;height:100%;background:#7b2d3a;width:25%}
+.small{font-size:14px;color:#6c625b}.finding{font-size:18px;line-height:1.55}
+@media(max-width:600px){main{padding:18px}.app{padding:8px}header h1{font-size:25px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<h1>THE TREASURY HEIST</h1>
+<div class="sub">Kautilya Bank — Fort Branch | Fraud Investigation Training (Difficulty: ⭐⭐⭐☆☆)</div>
+</header>
+<div class="bar"><span id="room">Briefing</span><span class="score">Score: <span id="score">100</span></span><span class="timer">⏱ <span id="timer">10:00</span></span></div>
+<div class="progress"><span id="progress"></span></div>
+<main id="main"></main>
+<footer>Concept 15: Escape Room — The Missing Treasury &nbsp;|&nbsp; Twist 3: Fraud-training tool for a bank</footer>
+</div>
+<script>
+const S={room:0,score:100,found:[],answers:{},time:600};
+let interval=setInterval(()=>{if(S.room<5){S.time--;if(S.time<0)S.time=0;drawTimer();if(S.time===0)timeout()}},1000);
+function drawTimer(){let m=String(Math.floor(S.time/60)).padStart(2,'0'),s=String(S.time%60).padStart(2,'0');document.getElementById('timer').textContent=m+':'+s}
+function addScore(n){S.score=Math.max(0,S.score+n);document.getElementById('score').textContent=S.score}
+function setRoom(n,name){S.room=n;document.getElementById('room').textContent=name;document.getElementById('progress').style.width=(n*25)+'%'}
+function main(x){document.getElementById('main').innerHTML=x}
+function timeout(){clearInterval(interval);main(`<h2>Time's up</h2><p class="finding">The investigation window has closed. Review the case and try again.</p><button onclick="location.reload()">Restart Investigation</button>`)}
+
+function start(){setRoom(1,'Room 1 — Missing Amount');main(`
+<h2>Room 1: The Missing Amount</h2>
+<p class="intro">Review today's supplier and utility ledger entries against actual bank debits. One of these transactions contains a discrepancy that you must uncover.</p>
+<div class="card"><h3>Daily Transaction Ledger vs. Bank Statement</h3>
+<table>
+<tr><th>Transaction / Vendor</th><th>Ledger Amount</th><th>Bank Amount</th></tr>
+<tr><td>Utilities</td><td>₹30,000</td><td>₹30,000</td></tr>
+<tr><td>Security</td><td>₹20,000</td><td>₹20,000</td></tr>
+<tr><td>Equipment Supplier A</td><td>₹3,20,000</td><td>₹3,20,000</td></tr>
+<tr><td>Supplier Payment (Meridian Office Systems)</td><td>₹5,00,000</td><td>₹12,84,600</td></tr>
+<tr><td>Insurance</td><td>₹12,700</td><td>₹12,700</td></tr>
+</table></div>
+<p><b>Which transaction shows a mismatch requiring investigation?</b></p>
+<button class="choice" onclick="room1(false)">Utilities</button>
+<button class="choice" onclick="room1(false)">Security</button>
+<button class="choice" onclick="room1(false)">Equipment Supplier A</button>
+<button class="choice" onclick="room1(true)">Supplier Payment (Meridian Office Systems)</button>
+<button class="choice" onclick="room1(false)">Insurance</button>
+<div id="feedback"></div>`)}
+
+function room1(ok){let f=document.getElementById('feedback');if(ok){addScore(10);S.found.push('Meridian payment mismatch');f.innerHTML='<div class="notice"><b>Correct.</b> You identified the ledger-to-bank discrepancy in the Meridian payment. Open the reconciliation lock.</div><button onclick="start2()">Continue →</button>'}else{addScore(-10);f.innerHTML='<div class="notice">Not this one. Compare the ledger amounts and bank amounts carefully across all rows.</div>'}}
+
+function start2(){setRoom(2,'Room 2 — Reconciliation Lock');main(`
+<h2>Room 2: Reconciliation Lock</h2>
+<p class="intro">The ledger recorded ₹5,00,000 for Meridian Office Systems, but the bank debited ₹12,84,600. Calculate the exact numeric difference from the records to proceed.</p>
+<div class="card"><p>₹12,84,600 − ₹5,00,000 = ?</p><input id="ans" type="number" placeholder="Enter amount"></div>
+<button onclick="check2()">Unlock</button>
+<button class="secondary" onclick="hint2()">Hint</button><div id="feedback"></div>`)}
+
+function hint2(){addScore(-5);document.getElementById('feedback').innerHTML='<div class="notice">Subtract the authorized ledger amount from the actual bank debit figure.</div>'}
+
+function check2(){let v=Number(document.getElementById('ans').value),f=document.getElementById('feedback');if(v===784600){addScore(15);S.found.push('Difference ₹7,84,600');f.innerHTML='<div class="notice"><b>Lock opened.</b> The unexplained difference is ₹7,84,600. Now examine the supporting branch documentation.</div><button onclick="start3()">Continue →</button>'}else{addScore(-5);f.innerHTML='<div class="notice">That calculation does not match the record discrepancy. Try again.</div>'}}
+
+function start3(){setRoom(3,'Room 3 — Follow the Trail');main(`
+<h2>Room 3: Follow the Trail</h2>
+<p class="intro">Examine the available branch records below. <b>Select the 4 documents</b> that form the strongest, most coherent evidence chain proving the diversion.</p>
+<div class="grid">
+<div class="doc" onclick="showDoc('po')"><b>📄 Purchase Order</b>Approved procurement record</div>
+<div class="doc" onclick="showDoc('invoice')"><b>🧾 Invoice</b>Submitted vendor invoice</div>
+<div class="doc" onclick="showDoc('vendor')"><b>🏦 Vendor Record & Bank Change</b>Account modification details</div>
+<div class="doc" onclick="showDoc('activity')"><b>🔐 System Activity</b>Audit logs with user IDs</div>
+<div class="doc" onclick="showDoc('goods')"><b>📦 Goods Receipt</b>Delivery confirmation note</div>
+<div class="doc" onclick="showDoc('staff')"><b>👥 Staff Profiles</b>Employee roles & IDs</div>
+<div class="doc" onclick="showDoc('expense')"><b>📊 Branch Expense Summary</b>Monthly expenditure overview</div>
+</div><div id="document" class="card hidden"></div>
+<div class="card"><b>Evidence selected (<span id="count">0</span>/4):</b><div id="evidence" class="evidence"></div></div>
+<div id="feedback"></div>`)}
+
+function showDoc(k){
+let d={
+  po:['Purchase Order','PO No. KB-PO-184. Approved amount: <b>₹5,00,000</b> for 100 workstations from Meridian Office Systems.'],
+  invoice:['Invoice','Invoice No. MOS-447. Total billed: <b>₹12,84,600</b>. Includes the base ₹5,00,000 workstation package, plus <i>Configuration & expedited deployment — ₹3,84,600</i> and special support — ₹4,00,000. No approved quotation or PO supports the two additional line items.'],
+  vendor:['Vendor Record & Bank Change','Meridian’s bank account was modified from account ending <b>1124</b> to account ending <b>9047</b> shortly before payment. The replacement account belongs to <b>Mosaic Trade Services</b>. Note: Rohan Mehta created this vendor profile two days prior, but records show it was also successfully used for a prior legitimate ₹5 lakh procurement.'],
+  activity:['System Activity Log','11:03 — User <b>NS-204</b> edited vendor bank details.<br>11:17 — User <b>NS-204</b> opened invoice.<br>11:19 — User <b>NS-204</b> opened payment approval.<br>11:21 — User <b>NS-204</b> submitted payment.'],
+  goods:['Goods Receipt','100 workstations received and signed off, confirming the legitimate ₹5,00,000 procurement, but bearing no relation to the inflated service charges.'],
+  staff:['Staff Profiles','<b>Rohan Mehta (RM-102):</b> Purchase Officer; created vendor record and original PO.<br><b>Neha Shah (NS-204):</b> Accounts Officer; responsible for payment workflows and processing.<br><b>Arjun Rao (AR-309):</b> Reconciliation Officer.<br><b>Vikram Sethi (VS-100):</b> Branch Manager.'],
+  expense:['Branch Expense Summary','Aggregated monthly operational expenditures across all branch cost centers, showing normal variance ranges.']
+}[k];
+let el=document.getElementById('document');el.classList.remove('hidden');el.innerHTML='<h3>'+d[0]+'</h3><p>'+d[1]+'</p><button onclick="selectEvidence(\''+k+'\')">Select as Evidence</button><button class="secondary" onclick="this.parentElement.classList.add(\'hidden\')">Close</button>';}
+
+function selectEvidence(k){
+  let names={po:'Purchase Order',invoice:'Invoice',vendor:'Vendor Record',activity:'System Activity',goods:'Goods Receipt',staff:'Staff Profiles',expense:'Branch Expense Summary'};
+  if(S.answers[k])return;
+  S.answers[k]=true;
+  let count=Object.keys(S.answers).filter(x=>['po','invoice','vendor','activity','goods','staff','expense'].includes(x) && S.answers[x]).length;
+  document.getElementById('count').textContent=count;
+  document.getElementById('evidence').innerHTML+=`<span class="tag">${names[k]}</span>`;
+  
+  if(count===4){
+    addScore(20);
+    document.getElementById('feedback').innerHTML='<div class="notice"><b>Four documents selected.</b> Proceed to the Evidence Board to construct your final deduction chain.</div><button onclick="start4()">Proceed to Evidence Board →</button>';
+  } else {
+    document.getElementById('feedback').innerHTML=`<div class="notice">Evidence recorded. Select ${4-count} more document${4-count===1?'':'s'}.</div>`;
+  }
+}
+
+function start4(){setRoom(4,'Room 4 — Evidence Board');main(`
+<h2>Room 4: Evidence Board</h2>
+<p class="intro">Establish the final investigative chain by answering four key analytical questions: <b>WHO → WHAT → HOW → HOW MUCH</b>.</p>
+
+<div class="card"><h3>1. WHO? — Which user performed the relevant system actions?</h3>
+<button class="choice" onclick="pick('who','Rohan Mehta (RM-102)')">Rohan Mehta (RM-102)</button>
+<button class="choice" onclick="pick('who','Neha Shah (NS-204)')">Neha Shah (NS-204)</button>
+<button class="choice" onclick="pick('who','Vikram Sethi (VS-100)')">Vikram Sethi (VS-100)</button></div>
+
+<div class="card"><h3>2. WHAT? — What payment was actually made by the bank?</h3>
+<button class="choice" onclick="pick('what','₹5,00,000')">₹5,00,000</button>
+<button class="choice" onclick="pick('what','₹12,84,600')">₹12,84,600</button>
+<button class="choice" onclick="pick('what','₹3,84,600')">₹3,84,600</button></div>
+
+<div class="card"><h3>3. HOW? — What changed between approved purchase and payment?</h3>
+<button class="choice" onclick="pick('how','Vendor bank details were altered and unsupported invoice additions were processed.')">Vendor bank details were altered and unsupported invoice additions were processed.</button>
+<button class="choice" onclick="pick('how','Goods were not delivered by the supplier.')">Goods were not delivered by the supplier.</button></div>
+
+<div class="card"><h3>4. HOW MUCH? — What amount cannot be supported by approved records?</h3>
+<button class="choice" onclick="pick('howmuch','₹5,00,000')">₹5,00,000</button>
+<button class="choice" onclick="pick('howmuch','₹7,84,600')">₹7,84,600</button>
+<button class="choice" onclick="pick('howmuch','₹12,84,600')">₹12,84,600</button></div>
+
+<button onclick="finish()">Submit Final Findings</button><button class="secondary" onclick="hint4()">Hint</button>
+<div id="feedback"></div>`)}
+
+function pick(q,val){S.answers.chain=S.answers.chain||{};S.answers.chain[q]=val;event.currentTarget.parentElement.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));event.currentTarget.classList.add('selected')}
+
+function hint4(){addScore(-5);document.getElementById('feedback').innerHTML='<div class="notice">Cross-reference user ID NS-204 with staff profiles, check actual bank debits, verify unauthorized invoice components, and calculate the unsupported balance.</div>'}
+
+function finish(){
+let c=S.answers.chain||{};
+let ok=(c.who==='Neha Shah (NS-204)' && c.what==='₹12,84,600' && c.how.includes('Vendor bank details') && c.howmuch==='₹7,84,600');
+if(!ok){addScore(-10);document.getElementById('feedback').innerHTML='<div class="notice">Your deduction chain has gaps or errors. Review your evidence and try again.</div>';return}
+
+addScore(25);clearInterval(interval);setRoom(5,'Investigation Complete');main(`
+<h2>🔓 Vault Opened — Investigation Complete</h2>
+<div class="card finding"><b>Final Audit Finding</b><p><b>₹7,84,600</b> was diverted through a manipulated vendor payment. The approved purchase order authorized ₹5,00,000, but the bank debited ₹12,84,600. While the invoice included a plausible-looking 'Configuration & expedited deployment' charge of ₹3,84,600 alongside other unapproved additions, no quotation or PO supported them. Cross-referencing system user <b>NS-204</b> with staff profiles revealed that <b>Neha Shah</b> executed the vendor bank account switch to Mosaic Trade Services and processed the payment.</p></div>
+<div class="card"><h3>Primary Control Failure</h3><p>Lack of segregation of duties and independent verification regarding vendor bank account modifications and secondary invoice additions.</p></div>
+<div class="card"><h3>Arthashastra Connection</h3><p>Reflects principles from <i>Arthashastra</i> Book II on rigorous examination of treasury records, receipts, and balances, where irregularities and misrepresentations demand strict audit scrutiny.</p></div>
+<div class="card"><h3>Your Score: ${S.score}/175</h3><p>You successfully investigated the mismatch, analyzed the audit trail, and established the complete deduction chain.</p></div>
+<button onclick="location.reload()">Play Again</button>`)}
+
+function begin(){setRoom(0,'Briefing');main(`
+<h2>Case Brief</h2>
+<p class="intro"><b>Fort Branch, 4:10 PM.</b> Daily treasury reconciliation has yielded an anomaly. A supplier payment appears standard in the ledger, but bank records indicate a significant discrepancy.</p>
+<div class="card"><b>Your role:</b> Fraud-investigation trainee. Uncover the missing amount, evaluate records, trace the audit trail, and identify control breakdowns before time runs out.</div>
+<div class="grid"><div class="card"><b>Concept 15</b><br>Escape Room: The Missing Treasury</div><div class="card"><b>Difficulty</b><br>⭐⭐⭐☆☆ (Intermediate)</div></div>
+<button onclick="start()">Begin Investigation</button>`)}
+
+begin();
+</script>
+</body>
+</html>
