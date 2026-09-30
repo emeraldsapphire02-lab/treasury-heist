@@ -36,21 +36,22 @@ footer{font-size:13px;color:#6f655c;margin-top:14px}
 <h1>THE TREASURY HEIST</h1>
 <div class="sub">Kautilya Bank — Fort Branch | Fraud Investigation Training (Difficulty: ⭐⭐⭐☆☆)</div>
 </header>
-<div class="bar"><span id="room">Briefing</span><span class="score">Score: <span id="score">100</span></span><span class="timer">⏱ <span id="timer">10:00</span></span></div>
+<div class="bar"><span id="room">Briefing</span><span class="score">Score: <span id="score">100</span></span><span class="timer">⏱ <span id="timer">15:00</span></span></div>
 <div class="progress"><span id="progress"></span></div>
 <main id="main"></main>
 <footer>Concept 15: Escape Room — The Missing Treasury &nbsp;|&nbsp; Twist 3: Fraud-training tool for a bank</footer>
 </div>
 <script>
-const S={room:0,score:100,found:[],answers:{},time:600};
-let interval=setInterval(()=>{if(S.room<5){S.time--;if(S.time<0)S.time=0;drawTimer();if(S.time===0)timeout()}},1000);
+const S={room:0,score:100,found:[],answers:{},time:900};
+let interval=null;
+function startTimer(){if(interval!==null)return;interval=setInterval(()=>{if(S.room>=1&&S.room<5){S.time--;if(S.time<0)S.time=0;drawTimer();if(S.time===0)timeout()}},1000)}
 function drawTimer(){let m=String(Math.floor(S.time/60)).padStart(2,'0'),s=String(S.time%60).padStart(2,'0');document.getElementById('timer').textContent=m+':'+s}
 function addScore(n){S.score=Math.max(0,S.score+n);document.getElementById('score').textContent=S.score}
 function setRoom(n,name){S.room=n;document.getElementById('room').textContent=name;document.getElementById('progress').style.width=(n*25)+'%'}
 function main(x){document.getElementById('main').innerHTML=x}
 function timeout(){clearInterval(interval);main(`<h2>Time's up</h2><p class="finding">The investigation window has closed. Review the case and try again.</p><button onclick="location.reload()">Restart Investigation</button>`)}
 
-function start(){setRoom(1,'Room 1 — Missing Amount');main(`
+function start(){startTimer();setRoom(1,'Room 1 — Missing Amount');main(`
 <h2>Room 1: The Missing Amount</h2>
 <p class="intro">Review today's supplier and utility ledger entries against actual bank debits. One of these transactions contains a discrepancy that you must uncover.</p>
 <div class="card"><h3>Daily Transaction Ledger vs. Bank Statement</h3>
@@ -96,7 +97,28 @@ function start3(){setRoom(3,'Room 3 — Follow the Trail');main(`
 <div class="doc" onclick="showDoc('expense')"><b>📊 Branch Expense Summary</b>Monthly expenditure overview</div>
 </div><div id="document" class="card hidden"></div>
 <div class="card"><b>Evidence selected (<span id="count">0</span>/4):</b><div id="evidence" class="evidence"></div></div>
-<div id="feedback"></div>`)}
+<div id="feedback"></div><div id="proceed4"></div>`);
+  refreshEvidence();
+}
+
+function refreshEvidence(){
+  const names={po:'Purchase Order',invoice:'Invoice',vendor:'Vendor Record',activity:'System Activity',goods:'Goods Receipt',staff:'Staff Profiles',expense:'Branch Expense Summary'};
+  const keys=['po','invoice','vendor','activity','goods','staff','expense'].filter(k=>S.answers[k]);
+  const count=document.getElementById('count');
+  const evidence=document.getElementById('evidence');
+  const feedback=document.getElementById('feedback');
+  const proceed=document.getElementById('proceed4');
+  if(count) count.textContent=keys.length;
+  if(evidence) evidence.innerHTML=keys.map(k=>`<span class="tag" style="cursor:pointer" onclick="selectEvidence('${k}')">${names[k]} ✕</span>`).join('');
+
+  // Keep the Room 4 button in its own container so later feedback messages
+  // can never accidentally remove it while exactly four evidences are selected.
+  if(proceed){
+    proceed.innerHTML = keys.length===4
+      ? '<button onclick="start4()">Proceed to Evidence Board →</button>'
+      : '';
+  }
+}
 
 function showDoc(k){
 let d={
@@ -108,21 +130,43 @@ let d={
   staff:['Staff Profiles','<b>Rohan Mehta (RM-102):</b> Purchase Officer; created vendor record and original PO.<br><b>Neha Shah (NS-204):</b> Accounts Officer; responsible for payment workflows and processing.<br><b>Arjun Rao (AR-309):</b> Reconciliation Officer.<br><b>Vikram Sethi (VS-100):</b> Branch Manager.'],
   expense:['Branch Expense Summary','Aggregated monthly operational expenditures across all branch cost centers, showing normal variance ranges.']
 }[k];
-let el=document.getElementById('document');el.classList.remove('hidden');el.innerHTML='<h3>'+d[0]+'</h3><p>'+d[1]+'</p><button onclick="selectEvidence(\''+k+'\')">Select as Evidence</button><button class="secondary" onclick="this.parentElement.classList.add(\'hidden\')">Close</button>';}
+let selected=!!S.answers[k];
+let el=document.getElementById('document');
+el.classList.remove('hidden');
+el.innerHTML='<h3>'+d[0]+'</h3><p>'+d[1]+'</p><button onclick="selectEvidence(\''+k+'\')">'+(selected?'Deselect Evidence':'Select as Evidence')+'</button><button class="secondary" onclick="this.parentElement.classList.add(\'hidden\')">Close</button>';
+}
 
 function selectEvidence(k){
-  let names={po:'Purchase Order',invoice:'Invoice',vendor:'Vendor Record',activity:'System Activity',goods:'Goods Receipt',staff:'Staff Profiles',expense:'Branch Expense Summary'};
-  if(S.answers[k])return;
+  const names={po:'Purchase Order',invoice:'Invoice',vendor:'Vendor Record',activity:'System Activity',goods:'Goods Receipt',staff:'Staff Profiles',expense:'Branch Expense Summary'};
+  const evidenceKeys=['po','invoice','vendor','activity','goods','staff','expense'];
+  let selectedCount=evidenceKeys.filter(x=>S.answers[x]).length;
+
+  if(S.answers[k]){
+    delete S.answers[k];
+    refreshEvidence();
+    document.getElementById('document').classList.add('hidden');
+    document.getElementById('feedback').innerHTML='<div class="notice"><b>'+names[k]+' deselected.</b> You can now choose another document.</div>';
+    return;
+  }
+
+  if(selectedCount>=4){
+    document.getElementById('feedback').innerHTML='<div class="notice">You already have 4 documents selected. Deselect one of the evidence tags before choosing another.</div>';
+    return;
+  }
+
   S.answers[k]=true;
-  let count=Object.keys(S.answers).filter(x=>['po','invoice','vendor','activity','goods','staff','expense'].includes(x) && S.answers[x]).length;
-  document.getElementById('count').textContent=count;
-  document.getElementById('evidence').innerHTML+=`<span class="tag">${names[k]}</span>`;
-  
-  if(count===4){
-    addScore(20);
-    document.getElementById('feedback').innerHTML='<div class="notice"><b>Four documents selected.</b> Proceed to the Evidence Board to construct your final deduction chain.</div><button onclick="start4()">Proceed to Evidence Board →</button>';
+  selectedCount++;
+  refreshEvidence();
+  document.getElementById('document').classList.add('hidden');
+
+  if(selectedCount===4){
+    if(!S.answers.evidenceScoreAwarded){
+      addScore(20);
+      S.answers.evidenceScoreAwarded=true;
+    }
+    document.getElementById('feedback').innerHTML='<div class="notice"><b>Four documents selected.</b> You can deselect any evidence tag, review the evidence, or proceed to the Evidence Board.</div>';
   } else {
-    document.getElementById('feedback').innerHTML=`<div class="notice">Evidence recorded. Select ${4-count} more document${4-count===1?'':'s'}.</div>`;
+    document.getElementById('feedback').innerHTML='<div class="notice">Evidence recorded. Select '+(4-selectedCount)+' more document'+(4-selectedCount===1?'':'s')+'.</div>';
   }
 }
 
@@ -149,17 +193,23 @@ function start4(){setRoom(4,'Room 4 — Evidence Board');main(`
 <button class="choice" onclick="pick('howmuch','₹7,84,600')">₹7,84,600</button>
 <button class="choice" onclick="pick('howmuch','₹12,84,600')">₹12,84,600</button></div>
 
-<button onclick="finish()">Submit Final Findings</button><button class="secondary" onclick="hint4()">Hint</button>
+<button onclick="finish()">Submit Final Findings</button><button class="secondary" onclick="hint1()">Hint 1</button><button class="secondary" onclick="hint2final()">Hint 2</button><button class="secondary" onclick="hint3()">Hint 3</button><button class="secondary" onclick="hint4()">Hint 4</button><button class="secondary" onclick="backToEvidenceChain()">← Back to Evidence Chain</button>
 <div id="feedback"></div>`)}
 
 function pick(q,val){S.answers.chain=S.answers.chain||{};S.answers.chain[q]=val;event.currentTarget.parentElement.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));event.currentTarget.classList.add('selected')}
 
-function hint4(){addScore(-5);document.getElementById('feedback').innerHTML='<div class="notice">Cross-reference user ID NS-204 with staff profiles, check actual bank debits, verify unauthorized invoice components, and calculate the unsupported balance.</div>'}
+function showHint(msg){addScore(-5);document.getElementById('feedback').innerHTML='<div class="notice">'+msg+'</div>'}
+function hint1(){showHint('Check the System Activity Log and match user ID NS-204 with the Staff Profiles.')}
+function hint2final(){showHint('Use the bank statement figure from Room 1, not the amount recorded in the ledger.')}
+function hint3(){showHint('Compare the approved purchase order, invoice, vendor bank-change record, and system activity.')}
+function hint4(){showHint('Subtract the approved ₹5,00,000 from the actual ₹12,84,600 bank debit.')}
+
+function backToEvidenceChain(){setRoom(3,'Room 3 — Follow the Trail');start3()}
 
 function finish(){
 let c=S.answers.chain||{};
 let ok=(c.who==='Neha Shah (NS-204)' && c.what==='₹12,84,600' && c.how.includes('Vendor bank details') && c.howmuch==='₹7,84,600');
-if(!ok){addScore(-10);document.getElementById('feedback').innerHTML='<div class="notice">Your deduction chain has gaps or errors. Review your evidence and try again.</div>';return}
+if(!ok){addScore(-10);document.getElementById('feedback').innerHTML='<div class="notice">Your deduction chain has gaps or errors. Review your evidence and try again.</div><button class="secondary" onclick="backToEvidenceChain()">← Back to Evidence Chain</button>';return}
 
 addScore(25);clearInterval(interval);setRoom(5,'Investigation Complete');main(`
 <h2>🔓 Vault Opened — Investigation Complete</h2>
@@ -170,11 +220,12 @@ addScore(25);clearInterval(interval);setRoom(5,'Investigation Complete');main(`
 <button onclick="location.reload()">Play Again</button>`)}
 
 function begin(){setRoom(0,'Briefing');main(`
-<h2>Case Brief</h2>
-<p class="intro"><b>Fort Branch, 4:10 PM.</b> Daily treasury reconciliation has yielded an anomaly. A supplier payment appears standard in the ledger, but bank records indicate a significant discrepancy.</p>
-<div class="card"><b>Your role:</b> Fraud-investigation trainee. Uncover the missing amount, evaluate records, trace the audit trail, and identify control breakdowns before time runs out.</div>
+<h2>Case Brief: The Treasury Lockdown</h2>
+<p class="intro"><b>Fort Branch, 4:10 PM.</b> The branch is preparing to close for the day when an automated treasury alert interrupts the final reconciliation. A routine transaction appears in the branch records, but the bank records show that a significantly larger amount has left the account.</p>
+<div class="card"><h3>🚨 Investigation Alert</h3><p>The relevant transaction records have been secured while the discrepancy is investigated. You have been called in as the fraud-investigation trainee. The branch cannot close its daily treasury reconciliation until the unexplained difference is accounted for.</p><p><b>Your objective:</b> identify the missing amount, trace the transaction through the available records, connect the strongest evidence, and determine what control failure allowed the discrepancy to occur.</p></div>
+<p><b>Your 15-minute investigation begins only when you enter Room 1.</b></p>
 <div class="grid"><div class="card"><b>Concept 15</b><br>Escape Room: The Missing Treasury</div><div class="card"><b>Difficulty</b><br>⭐⭐⭐☆☆ (Intermediate)</div></div>
-<button onclick="start()">Begin Investigation</button>`)}
+<button onclick="start()">🔓 Enter Room 1 — Start Investigation</button>`)}
 
 begin();
 </script>
